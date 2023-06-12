@@ -1,7 +1,9 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include "List.h"
+#include "LinkedList.h"
+#include "leaker.h"
+#include "leaker.cpp"
 using namespace std;
 
 void TestFindAll();

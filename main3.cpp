@@ -2,6 +2,8 @@
 #include <string>
 #include <sstream>
 #include "LinkedList.h"
+#include "leaker.h"
+#include "leaker.cpp"
 using namespace std;
 
 void TestInsertBeforeAfter();
