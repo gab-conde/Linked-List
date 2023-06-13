@@ -23,11 +23,12 @@ class LinkedList {
 
 	// data members of the LinkedList class
 	// data members are private so they cannot be accessed outside of the class
-	Node* head;				// pointer to the head of the LinkedList
-	Node* tail;				// pointer to the tail of the LinkedList
-	mutable Node* current;	// iterator for printing, deleting, etc.
-	mutable Node* queued;	// stores prev/next pointer of current
-	unsigned int size;		// number of Nodes currently in the LinkedList
+	Node* head;					// pointer to the head of the LinkedList
+	Node* tail;					// pointer to the tail of the LinkedList
+	mutable Node* preceding;	// stores previous pointer of current Node
+	mutable Node* current;		// iterator for printing, deleting, etc.
+	mutable Node* queued;		// stores prev/next pointer of current Node
+	unsigned int size;			// number of Nodes currently in the LinkedList
     
 
 	public:
@@ -101,22 +102,22 @@ class LinkedList {
         return true;
     }
 
-	//  Deletes a LinkedList and re-constructs it using the Copy Constructor.
+	// Deletes a LinkedList and re-constructs it using the Copy Constructor.
     LinkedList<T>& operator=(const LinkedList<T>& rhs) {
 		Clear();
         LinkedList<T>& list = *Clone(rhs);
         return list;
     }
 
-	// private:
 
-	// /* ---------- Helper Functions ---------- */
+	private:
+
+	/* ---------- Helper Functions ---------- */
 
     // Copies all member variables and Nodes from one LinkedList to another.
     LinkedList<T>* Clone(const LinkedList<T>& otherList) {
         LinkedList<T>();
 		size = 0;
-
 		otherList.current = otherList.head;
 		while (otherList.current != nullptr) {
             AddTail(otherList.current->data);
@@ -129,7 +130,6 @@ class LinkedList {
 	// Iterates through a LinkedList and returns the Node with the specified value.
 	Node* Search(Node* start, const T& value) const {
 		current = start;
-
 		while(current != nullptr) {
 			if (current->data == value) {
 				return current;
@@ -147,9 +147,7 @@ class LinkedList {
 	// Prints all Nodes in the LinkedList from beginning to end.
 	void PrintForward() const {
 		current = head;
-
 		while (current != nullptr) {
-			
 			cout << current->data << endl;
 			current = current->next;
 		}
@@ -158,11 +156,33 @@ class LinkedList {
 	// Prints all Nodes in the LinkedList from end to beginning.
 	void PrintReverse() const {
 		current = tail;
-
 		while (current != nullptr) {
-			
 			cout << current->data << endl;
 			current = current->prev;
+		}
+	}
+
+	// Uses recursion to visit all nodes from a specified index to the end of the LinkedList.
+	void PrintForwardRecursive(const Node* node) const {
+		if (node == tail) {
+			cout << node->data << endl;
+		}
+		else {
+			cout << node->data << endl;
+			const Node* nextNode = node->next;
+			PrintForwardRecursive(nextNode);
+		}
+	}
+
+	// Uses recursion to visit all nodes from a specified index to the beginning of the LinkedList.
+	void PrintReverseRecursive(const Node* node) const {
+		if (node == head) {
+			cout << node->data << endl;
+		}
+		else {
+			cout << node->data << endl;
+			const Node* nextNode = node->prev;
+			PrintReverseRecursive(nextNode);
 		}
 	}
 
@@ -211,22 +231,11 @@ class LinkedList {
         if (index > size || size == 0) {
             throw out_of_range("");
         }
-        // if index is in the first half of the LinkedList, start from head and iterate forward
-        if (index <= (size - 1) / 2) {
-            current = head;
-            unsigned int currentIndex = 0;
-            while (currentIndex != index) {
-                current = current->next;
-                currentIndex++;
-            }
-            return current;
-        }
-        // if index is in the second half of the LinkedList, start from end and iterate backwards
-        current = tail;
-        unsigned int currentIndex = size - 1;
-        while(currentIndex != index) {
-            current = current->prev;
-            currentIndex--;
+        current = head;
+        unsigned int currentIndex = 0;
+        while (currentIndex != index) {
+            current = current->next;
+            currentIndex++;
         }
         return current;
     }
@@ -237,26 +246,14 @@ class LinkedList {
 		if (index > size || size == 0) {
             throw out_of_range("");
         }
-        // if index is in the first half of the LinkedList, start from head and iterate forward
-        if (index <= (size - 1) / 2) {
-            current = head;
-            unsigned int currentIndex = 0;
-            while (currentIndex != index) {
-                current = current->next;
-                currentIndex++;
-            }
-            const Node* constNode = current;
-			return constNode;
+        current = head;
+        unsigned int currentIndex = 0;
+        while (currentIndex != index) {
+            current = current->next;
+            currentIndex++;
         }
-        // if index is in the second half of the LinkedList, start from end and iterate backwards
-        current = tail;
-        unsigned int currentIndex = size - 1;
-        while(currentIndex != index) {
-            current = current->prev;
-            currentIndex--;
-        }
-		const Node* constNode = current;
-        return constNode;
+        const Node* constNode = current;
+		return constNode;
     }
 
     // Returns a pointer to the head of the LinkedList.
@@ -299,12 +296,11 @@ class LinkedList {
         }
         newNode->prev = nullptr;
         head = newNode;
-        
 		size++;
 	}
 
 	// Creates a new Node and adds it at the end of the LinkedList.
-    //  Increments the size of the LinkedList.
+    // Increments the size of the LinkedList.
 	void AddTail(const T& data) {
 		Node* newNode = new Node();
 		newNode->data = data;
@@ -318,7 +314,6 @@ class LinkedList {
         }
 		newNode->next = nullptr;
         tail = newNode;
-
 		size++;
 	}
 
@@ -390,15 +385,126 @@ class LinkedList {
 
 
 	/* ---------- REMOVAL ---------- */
+	
+	// Removes the first Node in the LinkedList.
+	// Returns true if removal is successful and false if removal is unsuccessful.
+	bool RemoveHead() {
+        if (head != nullptr) {
+            if (head == tail) {
+                delete head;
+                head = nullptr;
+                tail = nullptr;
+            }
+            else {
+                queued = head->next;
+                delete head;
+                head = queued;
+                head->prev = nullptr;
+            }
+            size--;
+            return true;
+        }
+        else {
+            return false;
+        }
+	}
+
+	// Removes the last Node in the LinkedList.
+	// Returns true if removal is successful and false if removal is unsuccessful.
+	bool RemoveTail() {
+        if (tail != nullptr) {
+            if (head == tail) {
+                delete tail;
+                head = nullptr;
+                tail = nullptr;
+            }
+            else {
+                queued = tail->prev;
+                delete tail;
+                tail = queued;
+                tail->next = nullptr;
+            }
+            size--;
+            return true;
+        }
+        else {
+            return false;
+        }
+	}
+
+	// Remove all Nodes containing the specified data.
+	// Returns the number of nodes removed.
+	unsigned int Remove(const T& data) {
+		unsigned int numRemoved = 0;
+		preceding = head;
+		current = preceding->next;
+		queued = current->next;
+		while (queued != nullptr) {
+			if (current->data == data) {
+				delete current;
+				current = nullptr;
+				preceding->next = queued;
+				queued->prev = preceding;
+				current = queued;
+				queued = current->next;
+				size--;
+				numRemoved++;
+			}
+			else {
+				preceding = current;
+				current = queued;
+				queued = current->next;
+			}
+		}
+		if (head->data == data) {
+			RemoveHead();
+		}
+		if (tail->data == data) {
+			RemoveTail();
+		}
+		return numRemoved;
+	}
+
+	// Remove the Node at the specified index.
+	// Return true if removal is successful and false if removal is unsuccessful.
+	bool RemoveAt(unsigned int index) {
+		if (index > size - 1) {
+			return false;
+		}
+		if (index == 0) {
+			RemoveHead();
+		}
+		else if (index == size - 1) {
+			RemoveTail();
+		}
+		else {
+			preceding = head;
+			current = preceding->next;
+			queued = current->next;
+			for (unsigned int i = 1; i < index; i++) {
+				preceding = current;
+				current = queued;
+				queued = current->next;
+			}
+			delete current;
+			current = nullptr;
+			preceding->next = queued;
+			queued->prev = preceding;
+			size--;
+		}
+		return true;
+	}
 
 	// Deletes all Nodes from the LinkedList and resets size to 0.
 	void Clear() {
 		current = tail;
-
 		while (current != nullptr) {
 			queued = current->prev;
 			delete current;
 			current = queued;
+            size--;
 		}
+		head = nullptr;
+		tail = nullptr;
 	}
 };
